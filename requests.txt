@@ -1,0 +1,132 @@
+GET http://win00.vvip7.com/data/json/ladder/dist.asp
+
+Host:	win00.vvip7.com
+Proxy-Connection:	keep-alive
+Accept:	application/json, text/javascript, */*; q=0.01
+DNT:	1
+X-Requested-With:	XMLHttpRequest
+User-Agent:	Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.117 Safari/537.36
+Referer:	http://win00.vvip7.com/game/ladder/v2_index.asp
+Accept-Encoding:	gzip, deflate
+Accept-Language:	en-US,en;q=0.9,my;q=0.8
+Cookie:	__cfduid=de90b27183e4a8380ec3aba560eaf43a11579590108; ASPSESSIONIDASACTSAT=OAPDBDBDCMDLMAMOFKHFABMP; _ga=GA1.2.2038594054.1579590109; _gid=GA1.2.1088972013.1579590109; ladder_sound=on; ASPSESSIONIDAQCDQQCT=HAKBHOMDFHBCOJKAEGPJGEOO
+
+Response:
+
+{
+    "e": 62,
+    "o": 38,
+    "r": 18
+}
+
+-----
+GET http://win00.vvip7.com/data/json/ladder/result.asp
+Host:	win00.vvip7.com
+Proxy-Connection:	keep-alive
+Accept:	application/json, text/javascript, */*; q=0.01
+DNT:	1
+X-Requested-With:	XMLHttpRequest
+User-Agent:	Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.117 Safari/537.36
+Referer:	http://win00.vvip7.com/game/ladder/v2_index.asp
+Accept-Encoding:	gzip, deflate
+Accept-Language:	en-US,en;q=0.9,my;q=0.8
+Cookie:	__cfduid=de90b27183e4a8380ec3aba560eaf43a11579590108; ASPSESSIONIDASACTSAT=OAPDBDBDCMDLMAMOFKHFABMP; _ga=GA1.2.2038594054.1579590109; _gid=GA1.2.1088972013.1579590109; ladder_sound=on; ASPSESSIONIDAQCDQQCT=HAKBHOMDFHBCOJKAEGPJGEOO
+
+Response:
+{
+    "answer": "ODD",
+    "answer2": "홀",
+    "ladder_type": "type2",
+    "msg": "<li class=\"pos1\"></li><li class=\"pos2\"></li><li class=\"pos3\"></li><li class=\"pos4\"></li><li class=\"pos5\"></li><li class=\"pos6\"></li><li class=\"pos7\"></li><li class=\"pos8\"></li><li class=\"pos9\"></li>",
+    "start_point": "first",
+    "times": "163",
+    "times2": "01월22일-163"
+}
+
+
+-------------
+
+http://win00.vvip7.com/game/ladder/ladderContents/games_ladder.js
+
+function getGraph() {
+	if (RemaindTime > 30 && RemaindTime < 290)
+	{
+    $.ajax({
+        type: "get",
+        url: g4_path + "/data/json/ladder/dist.asp",
+        dataType: "json",
+        success: function(res) {
+            var oo = res.o + "%";
+            var ee = res.e + "%";
+            $("#graph_odd").animate({
+                width: oo
+            }, 2500, function() {
+                $("#txt_odd_per").html(oo);
+            });
+            $("#graph_even").animate({
+                width: ee
+            }, 2500, function() {
+                $("#txt_even_per").html(ee);
+            });
+        }
+    })
+	}
+}
+setInterval("getGraph()", 9000);
+
+
+function ladder_game() {
+    $.ajax({
+        type: "get",
+        url: '/data/json/ladder/result.asp',
+        dataType: "json",
+        success: function(res) {
+            ladder_result = res.answer;
+            ladder_result2 = res.answer2;
+            ladder_times = res.times2;
+            if (res.times == undefined) {
+                alert("System ကို ရှုံးနိမ့် ပြဿနာကို မှာ ဖြစ်ပွားခဲ့သည်။\n");
+                return false;
+            } else if (!res.times) {
+                alert("System ကို ရှုံးနိမ့် ပြဿနာကို မှာ ဖြစ်ပွားခဲ့သည်။\n");
+                return false;
+            }
+            if (curr_times != Number(res.times)) {
+                alert("သင်၏ browser ကို cache ကို ပြဿနာ refresh ။\nတိုင်းဒေသကြီးများ၏ ယခင် ပတ်လည် အတွက် ရလဒ်တွေကို စစ်ဆေးပါ။");
+				top.location.reload();
+                return false;
+            }
+            if (res.answer == 'CANCEL') {
+                $('#error_meg').show().find('p').html('ကုသမှု ပြန်ဖြစ် ၏ ဒီ round မမှန်ကန်ဘူး။<br /> ( F5 ) refresh ကိုကျေးဇူးတင်ပါ။');
+                return false;
+            }
+            var start_point = res.start_point;
+            var ladder_type = res.ladder_type;
+            $('#ladderPos').find('ul').removeClass().addClass(start_point + "_" + ladder_type).html(res.msg);
+            $('#answer').find('span').removeClass('on');
+            $('#startPos').find('span').removeClass('on');
+            $('#ladderWait').hide();
+            if (res.start_point == 'first') $('#startPos').find('.first').addClass('on');
+            else if (res.start_point == 'second') $('#startPos').find('.second').addClass('on');
+            if (res.ladder_type == 'type1') type1_start_pos();
+            else if (res.ladder_type == 'type2') type2_start_pos();
+        },
+        timeout: 10000,
+        error: function(jqXHR, textStatus, errorThrown) {
+            if (errorThrown == 'timeout') {
+                $('#error_meg').show().find('p').html('ဒါဟာ မေတ္တာရပ်ခံ အချိန် ထက်ကျော်လွန် သိရသည်။');
+            } else if (jqXHR.status == 404) {
+                $('#error_meg').show().find('p').html('သင်တောင်းဆိုသော စာမျက်နှာ မတှေ့ နိုငျပါသညျ။');
+            } else if (jqXHR.status == 500) {
+                $('#error_meg').show().find('p').html('ဟာ HTTP 500 ကို ပြည်တွင်း ဆာဗာကို အမှား ။');
+            } else if (jqXHR.status === 0) {
+                $('#error_meg').show().find('p').html('သင့်ရဲ့ အင်တာနက်ချိတ်ဆက် စစ်ဆေးပါ။');
+            } else {
+                $('#error_meg').show().find('p').html('ခေတ္တယာယီ မသန်မစွမ်း တစ်ဦး လှေကား အကျိုးရလဒ် ရ နိုင်ဘူး။');
+            }
+        }
+    });
+}
+-------------------
+server time =>
+http://win00.vvip7.com/game/ladder/ajax/timer.asp
